@@ -1,33 +1,70 @@
 # Expense Tracker Frontend
 
-A modern, responsive expense tracking application built with React, TypeScript, and Tailwind CSS. Manage your expenses with ease using features like add, edit, delete, search, filter, and visualize spending patterns with interactive charts.
+A modern, responsive expense tracking application built with React, TypeScript, and Tailwind CSS. Manage your expenses with ease using features like add, edit, delete, search, filter, visualize spending patterns with interactive charts, and convert currencies in real-time.
+
+## ⚠️ Prerequisites
+
+Before starting the frontend setup, ensure you have:
+
+1. **Node.js** (v16+) and npm installed
+2. **Backend Server** running (see Backend Requirements section below)
+3. **API Keys/Environment Variables** configured
 
 ## Quick Start
 
-### 1. Clone the Repository
+### Step 1: Clone the Repository
 
 ```bash
 git clone https://github.com/varshitverma/ui-exp-tracker
 cd "d:\exp tracker app\frontend"
 ```
 
-### 2. Install Dependencies
+### Step 2: API Keys & Environment Setup (IMPORTANT - DO THIS FIRST)
+
+Before installing dependencies, create a `.env.local` file in the root directory:
+
+```bash
+# Required: Backend API URL
+VITE_API_BASE_URL=http://localhost:3000/api/v1
+```
+
+**Environment Variables:**
+
+| Variable            | Value       | Required | Notes                                |
+| ------------------- | ----------- | -------- | ------------------------------------ |
+| `VITE_API_BASE_URL` | Backend URL | ✅ Yes   | E.g., `http://localhost:3000/api/v1` |
+
+**Important:**
+
+- The app **requires a backend server** to store expenses persistently
+- Without `VITE_API_BASE_URL`, the app uses sample data only
+- Update the URL based on your backend deployment (local dev, staging, production)
+
+### Backend Requirements
+
+Your backend must provide these API endpoints:
+
+```
+GET    /api/v1/expenses                    # Get all expenses
+POST   /api/v1/expenses                    # Create expense
+PUT    /api/v1/expenses/:id                # Update expense
+DELETE /api/v1/expenses/:id                # Delete expense
+GET    /api/v1/expenses/convert/:currency  # Convert to target currency
+```
+
+**Currency Conversion:**
+
+- The frontend expects the backend to provide exchange rate conversion
+- Backend should use ExchangeRate-API or similar service for live rates
+- Default currency: **INR** (Indian Rupees)
+
+### Step 3: Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Environment Setup (Optional)
-
-Create a `.env.local` file in the root directory:
-
-```bash
-VITE_API_BASE_URL=http://localhost:3000/api/v1
-```
-
-If not provided, the app uses mock data by default.
-
-### 4. Run Development Server
+### Step 4: Run Development Server
 
 ```bash
 npm run dev
@@ -35,11 +72,13 @@ npm run dev
 
 The app will start at `http://localhost:5173`
 
-### 5. Build for Production
+### Step 5: Build for Production
 
 ```bash
 npm run build
 ```
+
+## Environment Configuration Details
 
 ## Project Structure
 
@@ -94,16 +133,26 @@ src/
 - **Metric Cards**: Total expenses, monthly spending, top category, average expense
 - **Interactive Charts**: View spending trends with multiple visualization modes
 - **Real-time Updates**: Metrics update as you add/edit expenses
+- **Currency Display**: All amounts shown in selected currency
 
 ### 💰 Expense Management
 
-- **Add Expenses**: Quick form to create new expense entries
+- **Add Expenses**: Quick form to create new expense entries (always in INR)
 - **Edit Expenses**: Modify existing expenses with pre-filled data
 - **Delete Expenses**: Remove expenses with confirmation
 - **Search**: Find expenses by description, category, or payment method
-- **Filter**: Filter by category or payment method
+- **Filter**: Filter by category
 - **Sort**: Sort by date or amount
 - **Pagination**: Navigate through large expense lists
+
+### 💱 Currency Conversion
+
+- **180+ Supported Currencies**: USD, EUR, GBP, JPY, INR, and many more
+- **Live Exchange Rates**: Real-time rates powered by ExchangeRate-API
+- **Instant Conversion**: Switch currencies from sidebar dropdown
+- **All Views Updated**: Dashboard, charts, tables show selected currency
+- **Symbol Display**: Each currency shows its symbol (₹, $, €, £, etc.)
+- **Default INR**: All data stored in INR, conversion on-the-fly
 
 ### 📈 Analytics
 
@@ -111,6 +160,7 @@ src/
 - **Category Breakdown**: Pie chart showing spending by category
 - **Payment Method Analysis**: Bar chart showing payment method usage
 - **Monthly Statistics**: Detailed breakdown by month
+- **Currency-Aware**: Charts update with selected currency
 
 ### 🎨 User Experience
 
@@ -119,6 +169,7 @@ src/
 - **Form Validation**: Real-time validation with error messages
 - **Toast Notifications**: User feedback for all actions
 - **Collapsible Sidebar**: Optimized for mobile viewing
+- **Currency Selector**: Easy currency switching in sidebar
 
 ## Core Technologies
 
@@ -166,6 +217,23 @@ src/
 4. Select **"Delete"**
 5. Expense is removed immediately
 
+### Converting Currencies
+
+1. Look at the **Sidebar** (bottom section, above user menu)
+2. Click the **"Exchange Rate"** dropdown
+3. Select any currency from 180+ options
+   - Search by currency code (USD, EUR, GBP, etc.)
+   - Or scroll to find currency name
+4. **Conversion happens instantly**:
+   - Exchange rates fetched from ExchangeRate-API
+   - All expenses instantly shown in new currency
+   - Charts and cards update with new amounts
+5. **Important Notes**:
+   - All data stored in INR in the database
+   - Conversion is display-only (no data change)
+   - Refreshing page returns to last selected currency
+   - Free tier limited to 500 requests/month (ExchangeRate-API)
+
 ### Navigating Pages
 
 Use the sidebar to switch between:
@@ -212,7 +280,183 @@ Use the sidebar to switch between:
 
 ## Backend Integration
 
-The app works with or without a backend. Sample data is pre-loaded for testing.
+### Required Backend Setup
+
+This frontend **requires a backend API** to function properly. Follow these steps:
+
+#### 1. Start Backend Server
+
+Ensure your backend is running before starting the frontend:
+
+```bash
+# Example: If backend is in parent directory
+cd ../backend
+npm install
+npm run dev
+```
+
+Backend should be accessible at: `http://localhost:3000` (or your configured port)
+
+#### 2. Configure Frontend API URL
+
+Make sure `.env.local` has correct backend URL:
+
+```bash
+VITE_API_BASE_URL=http://localhost:3000/api/v1
+```
+
+#### 3. Backend API Endpoints Required
+
+Your backend must implement these endpoints:
+
+**Get All Expenses**
+
+```
+GET /api/v1/expenses
+Response:
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "amount": 1200.5,
+      "category": "Food",
+      "description": "Lunch",
+      "date": "2026-01-15T12:00:00",
+      "payment_method": "Credit Card",
+      "created_at": "2026-01-15T12:00:00",
+      "updated_at": "2026-01-15T12:00:00"
+    }
+  ]
+}
+```
+
+**Create Expense**
+
+```
+POST /api/v1/expenses
+Body:
+{
+  "amount": 1200.5,
+  "category": "Food",
+  "description": "Lunch",
+  "date": "2026-01-15T12:00:00",
+  "payment_method": "Credit Card"
+}
+Response: Returns created expense with ID
+```
+
+**Update Expense**
+
+```
+PUT /api/v1/expenses/:id
+Body: Same as create
+Response: Returns updated expense
+```
+
+**Delete Expense**
+
+```
+DELETE /api/v1/expenses/:id
+Response: Success message
+```
+
+**Currency Conversion (IMPORTANT)**
+
+```
+GET /api/v1/expenses/convert/:target_currency
+Example: GET /api/v1/expenses/convert/USD
+
+Response:
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "amount": 1200.5,
+      "category": "Food",
+      "description": "Lunch",
+      "date": "2026-01-15T12:00:00",
+      "payment_method": "Credit Card",
+      "original_amount": 1200.5,
+      "original_currency": "INR",
+      "converted_amount": 14.42,
+      "target_currency": "USD",
+      "created_at": "2026-01-15T12:00:00",
+      "updated_at": "2026-01-15T12:00:00"
+    }
+  ]
+}
+```
+
+#### 4. Currency Conversion Backend Requirements
+
+The frontend supports **180+ currencies** with live exchange rates. Your backend must:
+
+1. **Use ExchangeRate-API** (Recommended)
+   - Signup: https://www.exchangerate-api.com
+   - Get free tier API key
+   - Set environment variable: `EXCHANGE_RATE_API_KEY=your_key_here`
+
+2. **Supported Currencies:**
+   - Default: **INR** (Indian Rupees ₹)
+   - All ISO 4217 currency codes supported
+   - Live rates updated automatically
+
+3. **Backend Implementation Tips:**
+   - Cache exchange rates (refresh every 24 hours)
+   - Always store amounts in INR in database
+   - Return conversion for requested currency only
+   - Include original_currency and target_currency in response
+
+### API Service Layer
+
+All API calls are managed in `src/services/api.ts`:
+
+```typescript
+export const expenseApi = {
+  async fetchExpenses(): Promise<Expense[]> { ... }
+  async createExpense(expense: Omit<Expense, 'id'>): Promise<Expense> { ... }
+  async updateExpense(id: number, expense: Omit<Expense, 'id'>): Promise<Expense> { ... }
+  async deleteExpense(id: number): Promise<void> { ... }
+  async convertCurrency(targetCurrency: string): Promise<Expense[]> { ... }
+}
+```
+
+### Error Handling
+
+The API service automatically:
+
+- ✅ Handles network errors gracefully
+- ✅ Shows error toast notifications
+- ✅ Falls back to cached data when available
+- ✅ Logs errors to console for debugging
+
+### Troubleshooting Backend Connection
+
+**Problem: "API not available, using local data only"**
+
+1. Check backend is running: `curl http://localhost:3000/api/v1/expenses`
+2. Verify `VITE_API_BASE_URL` is correct in `.env.local`
+3. Check browser console for CORS errors
+4. Ensure backend has proper CORS configuration
+
+**Problem: Currency conversion not working**
+
+1. Verify backend has ExchangeRate-API key configured
+2. Test endpoint: `curl http://localhost:3000/api/v1/expenses/convert/USD`
+3. Check backend logs for API call failures
+4. Ensure backend can access external APIs
+
+### Production Deployment
+
+For production:
+
+1. Update `VITE_API_BASE_URL` to your deployed backend URL
+2. Ensure backend is on HTTPS
+3. Configure CORS properly for your domain
+4. Use environment secrets for sensitive data
+5. Enable rate limiting on backend
 
 ### To Connect Your Backend
 
