@@ -28,6 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getCurrencySymbol } from "@/lib/utils";
+import { useNav } from "@/context/nav-context";
 
 type Expense = {
   id?: number;
@@ -36,6 +38,10 @@ type Expense = {
   description?: string | null;
   date: string;
   payment_method: string;
+  original_amount?: number;
+  original_currency?: string;
+  converted_amount?: number;
+  target_currency?: string;
 };
 
 interface ExpenseChartProps {
@@ -57,6 +63,12 @@ export function ExpenseChart({ expenses = [] }: ExpenseChartProps) {
   const [chartType, setChartType] = React.useState<
     "trend" | "category" | "method"
   >("trend");
+  const { selectedCurrency } = useNav();
+
+  // Helper function to get display amount
+  const getDisplayAmount = (expense: Expense) => {
+    return expense.converted_amount ?? expense.amount;
+  };
 
   // Prepare trend data (by date)
   const trendData = React.useMemo(() => {
@@ -70,7 +82,7 @@ export function ExpenseChart({ expenses = [] }: ExpenseChartProps) {
         month: "short",
         day: "numeric",
       });
-      grouped[date] = (grouped[date] || 0) + exp.amount;
+      grouped[date] = (grouped[date] || 0) + getDisplayAmount(exp);
     });
 
     return Object.entries(grouped).map(([date, amount]) => ({
@@ -83,7 +95,8 @@ export function ExpenseChart({ expenses = [] }: ExpenseChartProps) {
   const categoryData = React.useMemo(() => {
     const grouped: Record<string, number> = {};
     expenses.forEach((exp) => {
-      grouped[exp.category] = (grouped[exp.category] || 0) + exp.amount;
+      grouped[exp.category] =
+        (grouped[exp.category] || 0) + getDisplayAmount(exp);
     });
     return Object.entries(grouped)
       .map(([name, value]) => ({
@@ -98,7 +111,7 @@ export function ExpenseChart({ expenses = [] }: ExpenseChartProps) {
     const grouped: Record<string, number> = {};
     expenses.forEach((exp) => {
       grouped[exp.payment_method] =
-        (grouped[exp.payment_method] || 0) + exp.amount;
+        (grouped[exp.payment_method] || 0) + getDisplayAmount(exp);
     });
     return Object.entries(grouped)
       .map(([name, value]) => ({
@@ -151,7 +164,11 @@ export function ExpenseChart({ expenses = [] }: ExpenseChartProps) {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis />
-                  <Tooltip formatter={(value) => `$${value}`} />
+                  <Tooltip
+                    formatter={(value) =>
+                      `${getCurrencySymbol(selectedCurrency)}${value}`
+                    }
+                  />
                   <Legend />
                   <Line
                     type="monotone"
@@ -172,7 +189,9 @@ export function ExpenseChart({ expenses = [] }: ExpenseChartProps) {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, value }) => `${name}: $${value}`}
+                    label={({ name, value }) =>
+                      `${name}: ${getCurrencySymbol(selectedCurrency)}${value}`
+                    }
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
@@ -187,7 +206,11 @@ export function ExpenseChart({ expenses = [] }: ExpenseChartProps) {
                       />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `$${value}`} />
+                  <Tooltip
+                    formatter={(value) =>
+                      `${getCurrencySymbol(selectedCurrency)}${value}`
+                    }
+                  />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -198,7 +221,11 @@ export function ExpenseChart({ expenses = [] }: ExpenseChartProps) {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip formatter={(value) => `$${value}`} />
+                  <Tooltip
+                    formatter={(value) =>
+                      `${getCurrencySymbol(selectedCurrency)}${value}`
+                    }
+                  />
                   <Legend />
                   <Bar dataKey="value" fill="#3b82f6" name="Amount" />
                 </BarChart>

@@ -56,6 +56,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ExpenseForm } from "@/components/expense-form";
+import { getCurrencySymbol } from "@/lib/utils";
+import { useNav } from "@/context/nav-context";
 
 type Expense = {
   id?: number;
@@ -66,6 +68,8 @@ type Expense = {
   payment_method: string;
   created_at?: string;
   updated_at?: string;
+  converted_amount?: number;
+  target_currency?: string;
 };
 
 interface ExpenseTableProps {
@@ -203,11 +207,21 @@ export function ExpenseTable({
           </Button>
         </div>
       ),
-      cell: ({ row }) => (
-        <div className="text-right font-medium">
-          ${Number(row.getValue("amount")).toFixed(2)}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const { selectedCurrency } = useNav();
+        const expense = row.original;
+
+        // Show converted amount if available, otherwise show original amount
+        const displayAmount = expense.converted_amount ?? expense.amount;
+        const displayCurrency = expense.target_currency ?? selectedCurrency;
+        const symbol = getCurrencySymbol(displayCurrency);
+
+        return (
+          <div className="text-right font-medium">
+            {symbol} {Number(displayAmount).toFixed(2)}
+          </div>
+        );
+      },
     },
     {
       accessorKey: "created_at",

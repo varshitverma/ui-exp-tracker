@@ -82,6 +82,10 @@ function AppContent() {
     }
   };
 
+  const handleCurrencyChange = (convertedExpenses: Expense[]) => {
+    setExpenses(convertedExpenses);
+  };
+
   const { currentPage } = useNav();
 
   const renderPage = () => {
@@ -124,6 +128,7 @@ function AppContent() {
       <AppSidebar
         variant="inset"
         onCreateExpense={() => setShowExpenseForm(true)}
+        onCurrencyChange={handleCurrencyChange}
       />
       <SidebarInset>
         <SiteHeader />

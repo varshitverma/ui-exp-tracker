@@ -7,6 +7,15 @@ export type Expense = {
   payment_method: string;
   created_at?: string;
   updated_at?: string;
+  original_amount?: number;
+  original_currency?: string;
+  converted_amount?: number;
+  target_currency?: string;
+};
+
+export type ConversionResponse = {
+  success: boolean;
+  data: Expense[];
 };
 
 const API_BASE_URL: string =
@@ -26,6 +35,26 @@ export const expenseApi = {
       return Array.isArray(data) ? data : data.data || [];
     } catch {
       console.log("API not available, using local data only");
+      return [];
+    }
+  },
+
+  async convertCurrency(targetCurrency: string): Promise<Expense[]> {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/expenses/convert/${targetCurrency}`,
+      );
+      if (!response.ok) {
+        if (response.status === 404) {
+          return [];
+        }
+        throw new Error("Failed to convert currency");
+      }
+      const data = await response.json();
+      return data.data || data;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      console.log("Currency conversion failed, using non-converted data");
       return [];
     }
   },

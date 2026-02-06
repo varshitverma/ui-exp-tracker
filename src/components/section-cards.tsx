@@ -13,6 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getCurrencySymbol } from "@/lib/utils";
+import { useNav } from "@/context/nav-context";
 
 type Expense = {
   id?: number;
@@ -23,6 +25,10 @@ type Expense = {
   payment_method: string;
   created_at?: string;
   updated_at?: string;
+  original_amount?: number;
+  original_currency?: string;
+  converted_amount?: number;
+  target_currency?: string;
 };
 
 interface SectionCardsProps {
@@ -30,9 +36,16 @@ interface SectionCardsProps {
 }
 
 export function SectionCards({ expenses = [] }: SectionCardsProps) {
-  // Calculate metrics
+  const { selectedCurrency } = useNav();
+
+  // Helper function to get display amount
+  const getDisplayAmount = (expense: Expense) => {
+    return expense.converted_amount ?? expense.amount;
+  };
+
+  // Calculate metrics using converted amounts when available
   const totalExpenses = expenses.reduce(
-    (sum, expense) => sum + expense.amount,
+    (sum, expense) => sum + getDisplayAmount(expense),
     0,
   );
   const thisMonthExpenses = expenses
@@ -44,7 +57,7 @@ export function SectionCards({ expenses = [] }: SectionCardsProps) {
         expDate.getFullYear() === now.getFullYear()
       );
     })
-    .reduce((sum, exp) => sum + exp.amount, 0);
+    .reduce((sum, exp) => sum + getDisplayAmount(exp), 0);
 
   const lastMonthExpenses = expenses
     .filter((exp) => {
@@ -56,7 +69,7 @@ export function SectionCards({ expenses = [] }: SectionCardsProps) {
         expDate.getFullYear() === lastMonth.getFullYear()
       );
     })
-    .reduce((sum, exp) => sum + exp.amount, 0);
+    .reduce((sum, exp) => sum + getDisplayAmount(exp), 0);
 
   const percentageChange =
     lastMonthExpenses === 0
@@ -67,7 +80,7 @@ export function SectionCards({ expenses = [] }: SectionCardsProps) {
 
   const categoryBreakdown = expenses.reduce(
     (acc, exp) => {
-      acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
+      acc[exp.category] = (acc[exp.category] || 0) + getDisplayAmount(exp);
       return acc;
     },
     {} as Record<string, number>,
@@ -81,13 +94,15 @@ export function SectionCards({ expenses = [] }: SectionCardsProps) {
   const avgExpense =
     expenses.length > 0 ? (totalExpenses / expenses.length).toFixed(2) : "0.00";
 
+  const symbol = getCurrencySymbol(selectedCurrency);
+
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Total Expenses</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            ${totalExpenses.toFixed(2)}
+            {symbol} {totalExpenses.toFixed(2)}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
@@ -108,7 +123,7 @@ export function SectionCards({ expenses = [] }: SectionCardsProps) {
         <CardHeader>
           <CardDescription>This Month</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            ${thisMonthExpenses.toFixed(2)}
+            {symbol} {thisMonthExpenses.toFixed(2)}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
@@ -129,7 +144,7 @@ export function SectionCards({ expenses = [] }: SectionCardsProps) {
             )}
           </div>
           <div className="text-muted-foreground">
-            Last month: ${lastMonthExpenses.toFixed(2)}
+            Last month: {symbol} {lastMonthExpenses.toFixed(2)}
           </div>
         </CardFooter>
       </Card>
@@ -141,7 +156,9 @@ export function SectionCards({ expenses = [] }: SectionCardsProps) {
             {topCategory[0]}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">${topCategory[1].toFixed(2)}</Badge>
+            <Badge variant="outline">
+              {symbol} {topCategory[1].toFixed(2)}
+            </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
@@ -158,7 +175,7 @@ export function SectionCards({ expenses = [] }: SectionCardsProps) {
         <CardHeader>
           <CardDescription>Average Expense</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            ${avgExpense}
+            {symbol} {avgExpense}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">Per expense</Badge>

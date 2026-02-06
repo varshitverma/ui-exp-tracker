@@ -1,14 +1,9 @@
 import * as React from "react";
-import {
-  IconDashboard,
-  IconWallet,
-  IconSettings,
-  IconChartBar,
-} from "@tabler/icons-react";
+import { IconDashboard, IconWallet, IconChartBar } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
 import { NavUser } from "@/components/nav-user";
+import { CurrencySelector } from "@/components/currency-selector";
 import { useNav } from "@/context/nav-context";
 import {
   Sidebar,
@@ -43,20 +38,18 @@ const data = {
       icon: IconChartBar,
     },
   ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-  ],
 };
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onCreateExpense?: () => void;
+  onCurrencyChange?: (expenses: any[]) => void;
 }
 
-export function AppSidebar({ onCreateExpense, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  onCreateExpense,
+  onCurrencyChange,
+  ...props
+}: AppSidebarProps) {
   const { setCurrentPage } = useNav();
 
   const handleNavClick = (title: string) => {
@@ -94,7 +87,9 @@ export function AppSidebar({ onCreateExpense, ...props }: AppSidebarProps) {
           onItemClick={handleNavClick}
           onCreateExpense={onCreateExpense}
         />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <div className="mt-auto border-t pt-4 pb-4">
+          <CurrencySelector onCurrencyChange={onCurrencyChange} />
+        </div>
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getCurrencySymbol } from "@/lib/utils";
 
 const expenseFormSchema = z.object({
   amount: z.string().min(1, "Amount is required"),
@@ -39,6 +40,10 @@ type Expense = {
   payment_method: string;
   created_at?: string;
   updated_at?: string;
+  original_amount?: number;
+  original_currency?: string;
+  converted_amount?: number;
+  target_currency?: string;
 };
 
 interface ExpenseFormProps {
@@ -72,8 +77,12 @@ export function ExpenseForm({
         ? expense.date.split("T")[0]
         : expense.date;
     }
+
+    // Always show and edit in INR (original amount stored in DB)
+    const displayAmount = expense?.original_amount ?? expense?.amount ?? "";
+
     setFormData({
-      amount: expense?.amount?.toString() || "",
+      amount: displayAmount.toString(),
       category: expense?.category || "",
       description: expense?.description || "",
       date: dateValue,
@@ -143,11 +152,14 @@ export function ExpenseForm({
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="amount" className="text-sm font-semibold">
-              Amount
+              Amount{" "}
+              <span className="text-xs text-muted-foreground">
+                (always in INR)
+              </span>
             </Label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                $
+                {getCurrencySymbol("INR")}
               </span>
               <Input
                 id="amount"
