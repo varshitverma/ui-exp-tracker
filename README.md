@@ -495,6 +495,298 @@ All API calls go through `src/services/api.ts`. This service:
 - Shows toast notifications
 - Falls back to mock data if API unavailable
 
+## 🚀 Deployment Guide
+
+This section covers deploying the Expense Tracker frontend to a production server with full HTTPS support.
+
+### Step 1: Configure Production Environment
+
+Create a `.env.production` file in the root directory for production builds:
+
+```bash
+# Production API URL - use relative path or your domain
+VITE_API_BASE_URL=/api/v1
+```
+
+**Important Notes:**
+
+- Never hardcode IP addresses - use relative paths or domain names
+- The API is served under `/api/v1` path on the same domain
+- Nginx will proxy `/api/*` requests to the backend server
+
+### Step 2: Build Frontend for Production
+
+Prepare the frontend build locally:
+
+```bash
+# Install dependencies
+npm install
+
+# Build for production
+npm run build
+```
+
+This creates an optimized `dist/` folder with minified code, ready for deployment.
+
+### Step 3: Upload Build to Server
+
+Choose one of the following methods:
+
+#### Method A: Using SCP (Remote Copy)
+
+```bash
+# From your local machine
+scp -i your-key.pem -r dist/* ubuntu@yourdomain.com:/var/www/html/
+```
+
+#### Method B: Direct Copy on Server
+
+```bash
+# If already on the server
+sudo rm -rf /var/www/html/*
+sudo cp -r dist/* /var/www/html/
+```
+
+**Permissions:**
+
+```bash
+# Ensure Nginx can read the files
+sudo chown -R www-data:www-data /var/www/html/
+sudo chmod -R 755 /var/www/html/
+```
+
+### Step 4: Configure Nginx
+
+Update Nginx configuration to serve the frontend and proxy API requests:
+
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+
+    # Serve static files from React build
+    root /var/www/html;
+    index index.html;
+
+    # Handle all requests, default to index.html for SPA routing
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Proxy API requests to backend
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Disable caching for HTML (allow cache busting via file hash)
+    location ~* \.html?$ {
+        expires -1;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+    }
+
+    # Cache static assets (JS, CSS, images)
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+### Step 5: Connect Domain and DNS
+
+Using Hostinger or similar DNS provider:
+
+**Add these DNS records:**
+
+| Type  | Name | Value          |
+| ----- | ---- | -------------- |
+| A     | @    | YOUR_EC2_IP    |
+| CNAME | www  | yourdomain.com |
+
+**Steps:**
+
+1. Go to your domain's DNS management
+2. Add the A record pointing to your server IP
+3. Add the CNAME record for www subdomain
+4. Wait for DNS propagation (can take 15-30 minutes)
+
+### Step 6: Enable HTTPS with Let's Encrypt
+
+Secure your domain with free SSL certificates.
+
+#### Install Certbot
+
+```bash
+sudo apt update
+sudo apt install certbot python3-certbot-nginx -y
+```
+
+#### Generate SSL Certificate
+
+```bash
+# For single domain
+sudo certbot --nginx -d yourdomain.com
+
+# For multiple domains (recommended)
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+```
+
+**When prompted:**
+
+- Enter email for important notices
+- Accept terms and conditions
+- Choose **Option 2: Redirect traffic to HTTPS** (recommended)
+
+#### Verify Auto-Renewal
+
+```bash
+# Check renewal timer is active
+sudo systemctl status certbot.timer
+
+# Test automatic renewal
+sudo certbot renew --dry-run
+```
+
+Certbot automatically renews certificates 30 days before expiration.
+
+### Step 7: Verify Deployment
+
+Test all endpoints to ensure everything works:
+
+#### Test Frontend
+
+```bash
+https://yourdomain.com
+```
+
+You should see the Expense Tracker interface loading.
+
+#### Test API Endpoint
+
+```bash
+curl https://yourdomain.com/api/v1/expenses
+```
+
+Should return your expenses (or empty array if none exist).
+
+#### Test Swagger Documentation
+
+```bash
+https://yourdomain.com/api/docs
+```
+
+Should display the API documentation (if backend includes Swagger).
+
+### Step 8: Deployment Update Workflow
+
+#### Backend Updates
+
+```bash
+# SSH into your server
+ssh -i your-key.pem ubuntu@yourdomain.com
+
+# Navigate to backend directory
+cd ~/backend
+
+# Pull latest changes
+git pull
+
+# Install new dependencies if needed
+source env/bin/activate
+pip install -r requirements.txt
+deactivate
+
+# Restart the service
+sudo systemctl restart fastapi
+
+# Verify restart
+sudo systemctl status fastapi
+```
+
+#### Frontend Updates
+
+```bash
+# On your local machine, build the latest version
+npm run build
+
+# Upload to server
+scp -i your-key.pem -r dist/* ubuntu@yourdomain.com:/var/www/html/
+
+# Or use direct copy if on server:
+# sudo cp -r dist/* /var/www/html/
+```
+
+No restart needed for frontend - Nginx automatically serves new files.
+
+### Final Architecture
+
+Your deployed system has this architecture:
+
+```
+Internet (HTTPS)
+    ↓
+Nginx (Port 443)
+    ├── / → React Frontend (Static Files)
+    │       └── /index.html for all routes (SPA routing)
+    │
+    └── /api/* → FastAPI Backend (Gunicorn)
+                └── Proxied to 127.0.0.1:8000
+```
+
+**Data Flow:**
+
+1. User requests `https://yourdomain.com` → Nginx serves React app
+2. React app makes API call to `/api/v1/expenses` → Nginx proxies to FastAPI backend
+3. Backend processes request and returns JSON
+4. Frontend displays data to user
+
+### Security Checklist
+
+- ✅ HTTPS enabled with valid SSL certificate
+- ✅ DNS records properly configured
+- ✅ Nginx firewall rules (if using AWS security groups)
+- ✅ Backend running on localhost only (127.0.0.1:8000)
+- ✅ Environment variables not hardcoded
+- ✅ API rate limiting enabled (optional)
+- ✅ CORS configured for your domain only
+- ✅ Auto-renewal certificate timer active
+
+### Troubleshooting Deployment
+
+**Problem: Certificate renewal failing**
+
+```bash
+# Check renewal logs
+sudo journalctl -u certbot.timer -n 50
+
+# Force renewal (use sparingly)
+sudo certbot renew --force-renewal
+```
+
+**Problem: API returning 502 Bad Gateway**
+
+- Check backend is running: `sudo systemctl status fastapi`
+- Verify backend listening on 127.0.0.1:8000
+- Check Nginx error logs: `sudo tail -n 50 /var/log/nginx/error.log`
+
+**Problem: Frontend showing blank page**
+
+- Check browser console for errors
+- Verify files exist: `ls -la /var/www/html/`
+- Check Nginx access logs: `sudo tail -n 50 /var/log/nginx/access.log`
+
+**Problem: DNS not resolving**
+
+- Wait for propagation (can take up to 48 hours)
+- Check: `nslookup yourdomain.com`
+- Or: `dig yourdomain.com`
+
+---
+
 ## Available Scripts
 
 ```bash
