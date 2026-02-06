@@ -7,7 +7,7 @@ A modern, responsive expense tracking application built with React, TypeScript, 
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/varshitverma/ui-exp-tracker
 cd "d:\exp tracker app\frontend"
 ```
 

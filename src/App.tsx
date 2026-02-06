@@ -14,70 +14,6 @@ import { ExpenseForm } from "@/components/expense-form";
 import { Drawer } from "@/components/ui/drawer";
 import { toast } from "sonner";
 
-// Generated mock data for initial expense s
-const mockExpenses: Expense[] = [
-  {
-    id: 1,
-    amount: 45.5,
-    category: "Food",
-    description: "Lunch at restaurant",
-    date: "2026-02-01",
-    payment_method: "Credit Card",
-    created_at: "2026-02-01T12:30:00Z",
-    updated_at: "2026-02-01T12:30:00Z",
-  },
-  {
-    id: 2,
-    amount: 120.0,
-    category: "Transport",
-    description: "Gas",
-    date: "2026-02-02",
-    payment_method: "Debit Card",
-    created_at: "2026-02-02T08:00:00Z",
-    updated_at: "2026-02-02T08:00:00Z",
-  },
-  {
-    id: 3,
-    amount: 65.99,
-    category: "Shopping",
-    description: "Groceries",
-    date: "2026-02-03",
-    payment_method: "Debit Card",
-    created_at: "2026-02-03T16:45:00Z",
-    updated_at: "2026-02-03T16:45:00Z",
-  },
-  {
-    id: 4,
-    amount: 35.0,
-    category: "Entertainment",
-    description: "Movie tickets",
-    date: "2026-02-04",
-    payment_method: "Credit Card",
-    created_at: "2026-02-04T19:00:00Z",
-    updated_at: "2026-02-04T19:00:00Z",
-  },
-  {
-    id: 5,
-    amount: 150.0,
-    category: "Utilities",
-    description: "Electricity bill",
-    date: "2026-02-05",
-    payment_method: "Bank Transfer",
-    created_at: "2026-02-05T10:00:00Z",
-    updated_at: "2026-02-05T10:00:00Z",
-  },
-  {
-    id: 6,
-    amount: 89.0,
-    category: "Health",
-    description: "Doctor appointment",
-    date: "2026-02-05",
-    payment_method: "Cash",
-    created_at: "2026-02-05T14:30:00Z",
-    updated_at: "2026-02-05T14:30:00Z",
-  },
-];
-
 function AppContent() {
   const [expenses, setExpenses] = React.useState<Expense[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -88,12 +24,10 @@ function AppContent() {
       try {
         setLoading(true);
         const apiExpenses = await expenseApi.fetchExpenses();
-        // Always use API response (empty array if not available)
-        // Only fall back to mock if both API fails AND we have no expenses
-        setExpenses(apiExpenses.length > 0 ? apiExpenses : mockExpenses);
+        setExpenses(apiExpenses);
       } catch (error) {
         console.error("Failed to load expenses:", error);
-        setExpenses(mockExpenses);
+        setExpenses([]);
       } finally {
         setLoading(false);
       }
