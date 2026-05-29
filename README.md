@@ -2,6 +2,16 @@
 
 A modern, responsive expense tracking application built with React, TypeScript, and Tailwind CSS. Manage your expenses with ease using features like add, edit, delete, search, filter, visualize spending patterns with interactive charts, and convert currencies in real-time.
 
+
+## Screenshots: 
+
+<img width="1491" height="718" alt="Screenshot 2026-05-29 at 10 49 10 PM" src="https://github.com/user-attachments/assets/b68310d8-9571-4bf1-a727-79533a0e439a" />
+
+<img width="1490" height="715" alt="Screenshot 2026-05-29 at 10 49 40 PM" src="https://github.com/user-attachments/assets/bac7f751-c34d-431a-abbf-3adf2d87133b" />
+
+<img width="1505" height="717" alt="Screenshot 2026-05-29 at 10 50 42 PM" src="https://github.com/user-attachments/assets/5e1b6d06-451e-4a5c-bacb-7d2306bdf10f" />
+
+
 ## ⚠️ Prerequisites
 
 Before starting the frontend setup, ensure you have:
